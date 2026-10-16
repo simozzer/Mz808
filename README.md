@@ -70,7 +70,13 @@ installer and file names all follow.
 **Releasing.** Bump the version, write the notes in `docs/releases/v<version>.md`, then push
 a matching tag (`git push origin v0.2.0`). The release workflow builds and checks everything
 on GitHub, and attaches the installer and zips to a draft release with those notes, ready to
-read over and publish. It refuses a tag that disagrees with `CMakeLists.txt`.
+read over and publish. It refuses a tag that disagrees with `CMakeLists.txt`. It then reads
+the release back from GitHub and fails unless the installer and both zips are on it. If it
+fails, fix the cause and run the *release* workflow again from the Actions tab with the tag.
+
+Every push to `main`, and every pull request, builds the installer the same way (the *build*
+workflow), so anything that would break it shows up straight away. Each run keeps its
+installer and zips for two weeks, to try between releases.
 
 ## Layout
 

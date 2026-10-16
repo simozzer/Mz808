@@ -12,7 +12,11 @@
 # Triggered by pushing a version tag (git push origin v0.2.0), or by creating a release with
 # a new tag on GitHub, which pushes the tag. If the release already exists the files are
 # added to it; if not, a draft is made with the notes in docs/releases/<tag>.md, to read over
-# and publish.
+# and publish. Either way the release is then read back from GitHub, and the run fails unless
+# the installer and both zips are on it.
+#
+# If a run fails, the release has no installer: fix the cause, then run this workflow again
+# from the Actions tab with the tag, which rebuilds and reattaches the downloads.
 #
 name: release
 
@@ -73,3 +77,21 @@ jobs:
               gh release create $env:TAG @files --draft --title "Mz808 $env:VERSION" @from
           }
           if ($LASTEXITCODE -ne 0) { throw "could not attach the files to $env:TAG" }
+
+      # Read the release back from GitHub, rather than trusting that the upload worked: the
+      # run fails, and says so, unless the release really carries its installer and zips.
+      - name: The release has its installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = (gh release view $env:TAG --json assets | ConvertFrom-Json).assets
+          if ($LASTEXITCODE -ne 0) { throw "could not read release $env:TAG back" }
+
+          $want = @{ "Setup.exe" = 1MB; "VST3.zip" = 1MB; "Standalone.zip" = 1MB }
+          foreach ($kind in $want.Keys) {
+              $name = "Mz808-$env:VERSION-win64-$kind"
+              $a = $assets | Where-Object { $_.name -eq $name }
+              if (-not $a)                     { throw "release $env:TAG has no $name" }
+              if ($a.size -lt $want[$kind])    { throw "$name on release $env:TAG is only $($a.size) bytes" }
+              "ok  -  {0,-34} {1,5:N1} MB" -f $name, ($a.size / 1MB)
+          }

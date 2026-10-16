@@ -1,0 +1,52 @@
+# Mz808 - an emulation of the TR-808 Rhythm Composer
+# Copyright (C) 2026 Simon Moscrop
+#
+# This program is free software: you can redistribute it and/or modify it under the terms of
+# the GNU Affero General Public License as published by the Free Software Foundation, version 3.
+# It is distributed WITHOUT ANY WARRANTY; see the LICENSE file for the full terms.
+
+#
+# Build and check everything a release would, on every push to main and every pull request,
+# installer included - so anything that would stop a release getting its installer shows up
+# at the commit that caused it, not on the day of the release.
+#
+# The installer and zips are kept on the run for two weeks, to try out between releases.
+#
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The JUCE the plugin is built and tested against - the same as release.yml.
+  JUCE_TAG: "9.0.2"
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # CMakeLists.txt expects JUCE beside the repository.
+      - name: JUCE
+        run: git clone --depth 1 --branch $env:JUCE_TAG https://github.com/juce-framework/JUCE ../JUCE
+
+      - name: Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+
+      - name: Build, check and package
+        run: ./build.ps1 -Release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mz808-win64
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
