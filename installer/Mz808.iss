@@ -1,5 +1,5 @@
 ; Mz808 - an emulation of the TR-808 Rhythm Composer
-; Copyright (C) 2026 Simon Moscrop
+; Created by Simon Moscrop
 ;
 ; This program is free software: you can redistribute it and/or modify it under the terms of
 ; the GNU Affero General Public License as published by the Free Software Foundation, version 3.
@@ -23,7 +23,7 @@
   #define AppVersion "0.0.0"
 #endif
 #ifndef AppCopyright
-  #define AppCopyright "Copyright (C) Simon Moscrop"
+  #define AppCopyright "Created by Simon Moscrop"
 #endif
 
 #define Artefacts "..\build\Mz808_artefacts\Release"
